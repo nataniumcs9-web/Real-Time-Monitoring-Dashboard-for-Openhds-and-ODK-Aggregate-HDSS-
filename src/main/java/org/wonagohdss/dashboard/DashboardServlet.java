@@ -55,6 +55,8 @@ public final class DashboardServlet extends HttpServlet {
                 if (round >= 0) {
                     writeJson(response, HttpServletResponse.SC_OK, repositoryFor(request).getDashboard(round));
                 }
+            } else if ("/field-worker-submissions".equals(path)) {
+                writeFieldWorkerSubmissions(request, response);
             } else if ("/not-visited".equals(path)) {
                 int round = readRound(request, response);
                 if (round >= 0) {
@@ -180,6 +182,56 @@ public final class DashboardServlet extends HttpServlet {
             writeError(response, HttpServletResponse.SC_BAD_REQUEST, "A valid round number is required.");
             return -1;
         }
+    }
+
+    private void writeFieldWorkerSubmissions(HttpServletRequest request, HttpServletResponse response)
+            throws SQLException, IOException {
+        int round = readRound(request, response);
+        if (round < 0) {
+            return;
+        }
+        String type = request.getParameter("type");
+        if (!"baseline".equals(type) && !"visit".equals(type)) {
+            writeError(response, HttpServletResponse.SC_BAD_REQUEST,
+                    "Submission type must be baseline or visit.");
+            return;
+        }
+        String fromValue = request.getParameter("from");
+        String toValue = request.getParameter("to");
+        boolean hasFrom = fromValue != null && fromValue.trim().length() > 0;
+        boolean hasTo = toValue != null && toValue.trim().length() > 0;
+        if (hasFrom != hasTo) {
+            writeError(response, HttpServletResponse.SC_BAD_REQUEST,
+                    "Both start and end dates are required for a custom interval.");
+            return;
+        }
+
+        java.sql.Date from = null;
+        java.sql.Date to = null;
+        if (hasFrom) {
+            if (!fromValue.trim().matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")
+                    || !toValue.trim().matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) {
+                writeError(response, HttpServletResponse.SC_BAD_REQUEST,
+                        "Dates must use the YYYY-MM-DD format.");
+                return;
+            }
+            try {
+                from = java.sql.Date.valueOf(fromValue.trim());
+                to = java.sql.Date.valueOf(toValue.trim());
+            } catch (IllegalArgumentException e) {
+                writeError(response, HttpServletResponse.SC_BAD_REQUEST,
+                        "Dates must use the YYYY-MM-DD format.");
+                return;
+            }
+            if (from.after(to)) {
+                writeError(response, HttpServletResponse.SC_BAD_REQUEST,
+                        "The start date must not be after the end date.");
+                return;
+            }
+        }
+        List<Map<String, Object>> rows = repositoryFor(request)
+                .getFieldWorkerSubmissions(type, round, from, to);
+        writeJson(response, HttpServletResponse.SC_OK, rows);
     }
 
     private void writeCsv(HttpServletRequest request, HttpServletResponse response)

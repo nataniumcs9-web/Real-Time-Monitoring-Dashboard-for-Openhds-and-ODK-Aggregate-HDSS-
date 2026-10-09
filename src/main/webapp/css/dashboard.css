@@ -154,6 +154,17 @@ body.sidebar-collapsed .main-content { margin-left: 76px; }
 .bar-stack .missed-segment { background: #dc7372; }
 .breakdown-value { min-width: 90px; color: #354f5c; font-size: 9px; text-align: right; }
 
+.worker-submission-toolbar { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 13px; }
+.worker-range-presets, .worker-date-inputs { display: flex; align-items: center; gap: 5px; }
+.worker-range-presets { padding: 3px; border: 1px solid #edf1f3; border-radius: 8px; background: #f7f9fa; }
+.worker-range-presets .segment { padding: 0 8px; }
+.worker-date-inputs label { display: flex; align-items: center; gap: 5px; color: #71838d; font-size: 9px; }
+.worker-date-inputs input { width: 130px; min-height: 30px; padding: 0 6px; border: 1px solid #e4eaed; border-radius: 6px; color: #405966; background: #fff; font: inherit; }
+.worker-date-error { flex-basis: 100%; color: #bb585c; font-size: 9px; }
+.worker-performance-grid .panel { min-width: 0; }
+.worker-performance-grid .table-scroll { max-height: 345px; }
+.worker-count { text-align: right; }
+
 .panel { padding: 17px 18px 12px; }
 .panel-toolbar, .panel-title-row { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
 .panel-toolbar strong, .panel-title-row strong { display: block; color: #294555; font: 700 11px Manrope, sans-serif; }
@@ -268,6 +279,11 @@ td { color: #536b77; font-size: 9px; }
     .coverage-card { padding: 15px; }
     .coverage-summary { flex-wrap: wrap; gap: 14px 22px; }
     .coverage-total { flex: 1 1 100%; }
+    .worker-submission-toolbar, .worker-range-presets, .worker-date-inputs { align-items: flex-start; }
+    .worker-submission-toolbar { flex-direction: column; }
+    .worker-range-presets, .worker-date-inputs { width: 100%; flex-wrap: wrap; }
+    .worker-date-inputs label { flex: 1 1 125px; }
+    .worker-date-inputs input { width: 100%; min-width: 0; }
     .breakdown-row, .mini-chart-row { grid-template-columns: 90px minmax(50px, 1fr) auto; gap: 7px; }
     .breakdown-value { min-width: 55px; }
     .panel-toolbar { align-items: flex-start; flex-direction: column; }

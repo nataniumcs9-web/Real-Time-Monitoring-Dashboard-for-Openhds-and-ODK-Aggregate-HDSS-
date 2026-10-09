@@ -27,10 +27,12 @@
         <nav class="side-nav" id="sidebar-navigation" aria-label="Main navigation">
             <a class="active" href="#overview" aria-label="Overview" aria-current="location"><span class="nav-icon" aria-hidden="true">▦</span>Overview</a>
             <a href="#coverage" aria-label="Household coverage"><span class="nav-icon" aria-hidden="true">◉</span>Household coverage</a>
+            <a href="#field-worker-performance" aria-label="Field worker performance"><span class="nav-icon" aria-hidden="true">▤</span>Field workers</a>
             <a href="#not-visited" aria-label="Not visited"><span class="nav-icon" aria-hidden="true">⌂</span>Not visited</a>
             <a href="#new-baseline" aria-label="New baseline"><span class="nav-icon" aria-hidden="true">＋</span>New baseline</a>
             <a href="#events" aria-label="Vital events"><span class="nav-icon" aria-hidden="true">⌁</span>Vital events</a>
             <a href="#updates" aria-label="Event updates"><span class="nav-icon" aria-hidden="true">↻</span>Event updates</a>
+            <a href="#data-summary" aria-label="Baseline and submission summary"><span class="nav-icon" aria-hidden="true">▣</span>Data summary</a>
             <a href="#map-section" aria-label="Field map"><span class="nav-icon" aria-hidden="true">⌖</span>Field map</a>
         </nav>
         <div class="sidebar-bottom">
@@ -196,6 +198,41 @@
                 </div>
             </section>
 
+            <section class="section-block" id="field-worker-performance">
+                <div class="section-heading">
+                    <div>
+                        <div class="eyebrow">FIELDWORKER PERFORMANCE</div>
+                        <h2>Field worker submissions</h2>
+                    </div>
+                </div>
+                <div class="worker-submission-toolbar">
+                    <div class="segmented-control" role="group" aria-label="Submission type">
+                        <button class="segment active" type="button" data-worker-submission="visit" aria-pressed="true">Visit</button>
+                        <button class="segment" type="button" data-worker-submission="baseline" aria-pressed="false">Baseline</button>
+                    </div>
+                    <div class="worker-range-presets" role="group" aria-label="Quick date range">
+                        <button class="segment" type="button" data-worker-range="week">This week</button>
+                        <button class="segment active" type="button" data-worker-range="15days">Last 15 days</button>
+                        <button class="segment" type="button" data-worker-range="month">This month</button>
+                        <button class="segment" type="button" data-worker-range="all">All dates</button>
+                    </div>
+                    <div class="worker-date-inputs">
+                        <label>From <input id="worker-submission-from" type="date" aria-label="Submission start date"></label>
+                        <label>To <input id="worker-submission-to" type="date" aria-label="Submission end date"></label>
+                        <button class="button button-small button-outline" id="apply-worker-dates" type="button">Apply dates</button>
+                    </div>
+                    <span id="worker-date-error" class="worker-date-error" role="alert" hidden></span>
+                </div>
+                <div class="split-grid worker-performance-grid">
+                    <article class="panel">
+                        <div class="panel-title-row">
+                            <div><strong>Performance by field worker</strong><span id="worker-chart-caption" class="panel-subtitle"></span></div>
+                        </div>
+                        <div id="field-worker-chart" class="mini-chart" role="img" aria-label="Field worker performance"></div>
+                    </article>
+                </div>
+            </section>
+
             <section class="section-block" id="not-visited">
                 <div class="section-heading">
                     <div>
@@ -258,10 +295,6 @@
                     </div>
                 </div>
                 <div id="vital-events-grid" class="event-grid"></div>
-                <div class="panel event-chart-panel">
-                    <div class="panel-title-row"><div><strong>Event volume</strong><span class="panel-subtitle">Counts reported for this round</span></div></div>
-                    <div id="vital-events-chart" class="mini-chart"></div>
-                </div>
             </section>
 
             <section class="section-block" id="updates">
@@ -273,6 +306,36 @@
                     </div>
                 </div>
                 <div id="event-updates-grid" class="updates-grid"></div>
+            </section>
+
+            <section class="section-block" id="data-summary">
+                <div class="section-heading">
+                    <div>
+                        <div class="eyebrow" id="round-summary-eyebrow">ROUND OVERVIEW</div>
+                        <h2>Round <span id="round-summary-number">0</span> summary</h2>
+                        <p class="section-note">Data collection summary from ODK Aggregate for this round.</p>
+                    </div>
+                </div>
+                <div class="metric-grid">
+                    <article class="metric-card">
+                        <span class="metric-label">Social groups</span>
+                        <div class="metric-value" id="summary-social-groups">—</div>
+                        <span class="metric-foot">Total collected</span>
+                        <span class="metric-icon icon-violet">◎</span>
+                    </article>
+                    <article class="metric-card">
+                        <span class="metric-label">Relationships</span>
+                        <div class="metric-value" id="summary-relationships">—</div>
+                        <span class="metric-foot">Total collected</span>
+                        <span class="metric-icon icon-amber">⌘</span>
+                    </article>
+                    <article class="metric-card">
+                        <span class="metric-label">Membership</span>
+                        <div class="metric-value" id="summary-membership">—</div>
+                        <span class="metric-foot">Total collected</span>
+                        <span class="metric-icon icon-teal">∞</span>
+                    </article>
+                </div>
             </section>
 
             <section class="section-block" id="map-section">

@@ -19,19 +19,19 @@ The v1.0.0 release is a Tomcat 6-compatible WAR built from this source. Download
 
 ## Database configuration
 
-The application connects to the MySQL server configured by the user or deployment environment; it does not contain production counts or database credentials. The settings dialog pre-fills only the schema names (`openhds`, `odk_prod`) and standard MySQL port. Enter the actual production host, database account, and password, then choose **Test connection & apply**. Local backup credentials are not prefilled. A successful test verifies read access to the OpenHDS round and baseline views, the ODK visit and registration tables, and a cross-schema join. It applies the connection to the current server-side session. Alternatively, set these environment variables for Tomcat before starting it:
+The application connects to the MySQL server configured by the user or deployment environment; it does not contain production counts or a database password. Without environment overrides, the settings dialog defaults to host `localhost`, port `3306`, schemas `openhds` and `odk_prod`, and user `whdss`. Enter the database password, then choose **Test connection & apply**. These are connection defaults only; no password is embedded in the WAR. A successful test verifies read access to the OpenHDS round and baseline views, the ODK visit and registration tables, and a cross-schema join. It applies the connection to the current server-side session. Alternatively, set these environment variables for Tomcat before starting it:
 
 ```text
-DASHBOARD_DB_URL=jdbc:mysql://db-host:3306/openhds?useUnicode=true&characterEncoding=UTF-8
-DASHBOARD_DB_HOST=db-host
+DASHBOARD_DB_URL=jdbc:mysql://localhost:3306/openhds?useUnicode=true&characterEncoding=UTF-8
+DASHBOARD_DB_HOST=localhost
 DASHBOARD_DB_PORT=3306
-DASHBOARD_DB_USER=round_monitor_readonly
+DASHBOARD_DB_USER=whdss
 DASHBOARD_DB_PASSWORD=your-read-only-password
 DASHBOARD_OPENHDS_SCHEMA=openhds
 DASHBOARD_ODK_SCHEMA=odk_prod
 ```
 
-`dashboard.properties.example` shows the same names. The configured user should have `SELECT` access only to:
+`dashboard.properties.example` shows the same names. For production, use a dedicated least-privilege account with `SELECT` access only to:
 
 - `openhds.allpopkebele2`, `openhds.allpopkebele`, `openhds.socialgroup`, `openhds.relationship`, and `openhds.round`
 - The ODK tables used by this dashboard in `odk_prod`, especially `visit_registration_core`, `location_registration_core`, `baseline_core`, vital-event forms, morbidity forms, immunization, family planning, economic information, and national-ID forms.
@@ -61,8 +61,10 @@ The web pages load map and font assets from external CDNs; provide internet acce
 ## Round and metric behavior
 
 - Round 0 is always available as the baseline. Baseline totals use distinct `allpopkebele2.houseid` and `allpopkebele.uuid` values; social groups and relationships exclude OpenHDS records marked deleted.
+- The baseline and submission summary reuses the live baseline-household, social-group, and relationship totals, and sums ODK rows not marked complete (`_IS_COMPLETE` is `0` or `NULL`) across available `*_core` form tables.
 - Active round choices come from `openhds.round.roundNumber`. The household-visit progress total counts rows in `odk_prod.visited`; cluster and field-worker breakdowns use `visit_registration_core.OPENHDS_ROUND_NUMBER` and baseline household matching.
 - A baseline household is counted once overall and assigned to one baseline cluster for progress, not once per duplicate view row. Field-worker progress is computed from distinct baseline household IDs matched to visits assigned to each field worker in the selected round.
+- The field-worker submissions panel loads counts separately from the main dashboard and switches between row counts from `baseline_core` and row counts from `visit_registration_core` for the selected round. Quick date ranges (this week, last 15 days, this month, or all dates) and a custom calendar interval filter `_SUBMISSION_DATE`; baseline submissions are not round-filtered because that form has no round-number column. Worker ID `FWAD1` and blank worker IDs are excluded from both views.
 - New households and new population count all rows in `odk_prod.new_baseline` and `odk_prod.new_population`. Their cluster summaries group by the first three characters of `OPENHDS_LOCATION_ID` and `INDIVIDUAL_INFO_INDIVIDUAL_ID`, respectively.
 - Event forms with `OPENHDS_VISIT_ID` are scoped to the selected round through `visit_registration_core`. A form without a visit ID may be scoped to `openhds.round` start/end dates and is explicitly labeled `date-window`. Forms that cannot be linked are marked unavailable instead of being shown as zero.
 - Births, deaths, in-migrations, and out-migrations are counted from their corresponding ODK core forms. Internal/external in-migration uses `OPENHDS_MIGRATION_TYPE`; internal/external out-migration uses the ODK `WITHIN_HDSS_KEBELES` response codes.
@@ -76,6 +78,7 @@ The web pages load map and font assets from external CDNs; provide internet acce
 - `GET /api/settings` (returns connection settings without the password)
 - `POST /api/settings` (tests a connection and applies it to the current server session)
 - `GET /api/dashboard?round=1`
+- `GET /api/field-worker-submissions?round=1&type=visit&from=2026-10-01&to=2026-10-09` (date parameters are optional together; omit both for all dates; `type` is `visit` or `baseline`)
 - `GET /api/not-visited?round=1`
 - `GET /api/not-visited.csv?round=1`
 - `GET /api/locations?round=1`

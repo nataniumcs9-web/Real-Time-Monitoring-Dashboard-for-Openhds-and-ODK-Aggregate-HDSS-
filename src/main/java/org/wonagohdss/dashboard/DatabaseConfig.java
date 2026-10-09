@@ -42,10 +42,22 @@ public final class DatabaseConfig {
         String openhdsSchema = setting("dashboard.db.openhdsSchema", "DASHBOARD_OPENHDS_SCHEMA");
         String odkSchema = setting("dashboard.db.odkSchema", "DASHBOARD_ODK_SCHEMA");
         String host = setting("dashboard.db.host", "DASHBOARD_DB_HOST");
+        if (host == null || host.trim().length() == 0) {
+            host = hostFromUrl(url);
+        }
+        if (host == null || host.trim().length() == 0) {
+            host = "localhost";
+        }
         String configuredPort = setting("dashboard.db.port", "DASHBOARD_DB_PORT");
         int port = parsePort(configuredPort, url);
-        return new DatabaseConfig(host == null ? hostFromUrl(url) : host, port, url,
-                user, password, openhdsSchema, odkSchema);
+        String safeOpenhds = validateSchema(openhdsSchema, "openhds");
+        String configuredUrl = url == null || url.trim().length() == 0
+                ? "jdbc:mysql://" + validateHost(host) + ":" + port + "/" + safeOpenhds
+                    + "?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull"
+                : url;
+        String configuredUser = user == null || user.trim().length() == 0 ? "whdss" : user;
+        return new DatabaseConfig(host, port, configuredUrl,
+                configuredUser, password, safeOpenhds, odkSchema);
     }
 
     public static DatabaseConfig fromSettings(String host, String port, String openhdsSchema,

@@ -11,6 +11,9 @@
     var mapRows = [];
     var missedLimit = 60;
     var progressMode = "cluster";
+    var workerSubmissionMode = "visit";
+    var workerSubmissionRange = "15days";
+    var workerSubmissionRequest = 0;
     var mapArea = "all";
     var mapAreaValue = "all";
     var navigationLinks = Array.prototype.slice.call(
@@ -195,6 +198,13 @@
         renderMiniBars("baseline-sex-chart", data.populationBySex, "#8273bf", "total");
     }
 
+    function renderDataSummary(roundSummary, round) {
+        byId("round-summary-number").textContent = round.number;
+        byId("summary-social-groups").textContent = number(roundSummary.socialGroups);
+        byId("summary-relationships").textContent = number(roundSummary.relationships);
+        byId("summary-membership").textContent = number(roundSummary.membership);
+    }
+
     function renderProgress(progress, round) {
         byId("round-number-label").textContent = round.number === 0 ? "0 · BASELINE" : round.number;
         byId("round-dates").textContent = round.startDate
@@ -243,6 +253,95 @@
         byId("progress-breakdown").innerHTML = html || '<div class="inline-note">No visit records are available for this round.</div>';
     }
 
+    function formatDateInput(date) {
+        var year = date.getFullYear();
+        var month = String(date.getMonth() + 1);
+        var day = String(date.getDate());
+        return year + "-" + (month.length < 2 ? "0" : "") + month
+            + "-" + (day.length < 2 ? "0" : "") + day;
+    }
+
+    function setWorkerDateRange(range, shouldLoad) {
+        workerSubmissionRange = range;
+        var from = byId("worker-submission-from");
+        var to = byId("worker-submission-to");
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (range === "all") {
+            from.value = "";
+            to.value = "";
+        } else {
+            var start = new Date(today.getTime());
+            if (range === "week") {
+                start.setDate(start.getDate() - (start.getDay() + 6) % 7);
+            } else if (range === "15days") {
+                start.setDate(start.getDate() - 14);
+            } else if (range === "month") {
+                start.setDate(1);
+            }
+            from.value = formatDateInput(start);
+            to.value = formatDateInput(today);
+        }
+        document.querySelectorAll("[data-worker-range]").forEach(function (button) {
+            var active = button.getAttribute("data-worker-range") === range;
+            button.classList.toggle("active", active);
+            button.setAttribute("aria-pressed", String(active));
+        });
+        byId("worker-date-error").hidden = true;
+        if (shouldLoad) {
+            loadWorkerSubmissions();
+        }
+    }
+
+    function workerDateLabel() {
+        if (workerSubmissionRange === "all") {
+            return "All dates";
+        }
+        return "Submissions " + byId("worker-submission-from").value
+            + " to " + byId("worker-submission-to").value;
+    }
+
+    function loadWorkerSubmissions() {
+        if (!currentDashboard) {
+            return;
+        }
+        var round = Number(currentDashboard.round.number || 0);
+        var from = byId("worker-submission-from").value;
+        var to = byId("worker-submission-to").value;
+        var requestId = ++workerSubmissionRequest;
+        var query = new URLSearchParams();
+        query.set("round", round);
+        query.set("type", workerSubmissionMode);
+        if (workerSubmissionRange !== "all") {
+            query.set("from", from);
+            query.set("to", to);
+        }
+        var emptyMessage = workerSubmissionMode === "visit" && round === 0
+            ? "No visit submissions apply to Baseline (Round 0)."
+            : "No field-worker submissions are available for this selection.";
+        byId("worker-chart-caption").textContent = workerDateLabel();
+        byId("field-worker-chart").innerHTML = '<div class="inline-note">Loading submissions…</div>';
+
+        requestJson("api/field-worker-submissions?" + query.toString()).then(function (rows) {
+            if (requestId !== workerSubmissionRequest || !currentDashboard
+                    || round !== Number(currentDashboard.round.number || 0)) {
+                return;
+            }
+            if (rows.length) {
+                renderMiniBars("field-worker-chart", rows, "#238b83", "total");
+            } else {
+                byId("field-worker-chart").innerHTML = '<div class="inline-note">'
+                    + escapeHtml(emptyMessage) + "</div>";
+            }
+        }).catch(function (error) {
+            if (requestId !== workerSubmissionRequest) {
+                return;
+            }
+            byId("field-worker-chart").innerHTML = '<div class="inline-note">'
+                + escapeHtml("Could not load submissions: " + error.message) + "</div>";
+        });
+    }
+
     function updateExportLink() {
         byId("export-progress").href = "api/export.csv?round=" + currentRound() + "&by=" + progressMode;
     }
@@ -282,13 +381,6 @@
 
     function renderEvents(events) {
         byId("vital-events-grid").innerHTML = events.map(eventCard).join("");
-        var available = events.filter(function (event) { return event.available && event.count !== null; });
-        renderMiniBars("vital-events-chart", available.map(function (event) {
-            return { label: event.label, value: event.count };
-        }), "#1a9b80", "value");
-        if (!available.length) {
-            byId("vital-events-chart").innerHTML = '<div class="inline-note">No event counts can be scoped to this round yet.</div>';
-        }
     }
 
     function renderUpdates(events) {
@@ -304,9 +396,11 @@
         currentDashboard = data;
         renderBaseline(data.baseline);
         renderProgress(data.progress, data.round);
+        loadWorkerSubmissions();
         renderNewBaseline(data.newBaseline);
         renderEvents(data.vitalEvents);
         renderUpdates(data.eventUpdates);
+        renderDataSummary(data.roundSummary, data.round);
         byId("refresh-stamp").textContent = "Updated " + new Date(data.generatedAt).toLocaleString();
         byId("report-link").href = "report.html?round=" + data.round.number;
         byId("presentation-link").href = "presentation.html?round=" + data.round.number;
@@ -555,6 +649,45 @@
             updateExportLink();
         });
     });
+    document.querySelectorAll("[data-worker-submission]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            document.querySelectorAll("[data-worker-submission]").forEach(function (item) {
+                var active = item === button;
+                item.classList.toggle("active", active);
+                item.setAttribute("aria-pressed", String(active));
+            });
+            workerSubmissionMode = button.getAttribute("data-worker-submission");
+            loadWorkerSubmissions();
+        });
+    });
+    document.querySelectorAll("[data-worker-range]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            setWorkerDateRange(button.getAttribute("data-worker-range"), true);
+        });
+    });
+    [byId("worker-submission-from"), byId("worker-submission-to")].forEach(function (input) {
+        input.addEventListener("change", function () {
+            workerSubmissionRange = "custom";
+            document.querySelectorAll("[data-worker-range]").forEach(function (button) {
+                button.classList.remove("active");
+                button.setAttribute("aria-pressed", "false");
+            });
+            byId("worker-date-error").hidden = true;
+        });
+    });
+    byId("apply-worker-dates").addEventListener("click", function () {
+        var from = byId("worker-submission-from").value;
+        var to = byId("worker-submission-to").value;
+        if (!from || !to || from > to) {
+            byId("worker-date-error").textContent = from && to
+                ? "Start date must be on or before end date."
+                : "Choose both a start date and an end date.";
+            byId("worker-date-error").hidden = false;
+            return;
+        }
+        workerSubmissionRange = "custom";
+        loadWorkerSubmissions();
+    });
     document.querySelectorAll("[data-map-filter]").forEach(function (button) {
         button.addEventListener("click", function () {
             document.querySelectorAll("[data-map-filter]").forEach(function (item) {
@@ -601,6 +734,7 @@
         if (event.key === "Escape" && !byId("settings-overlay").hidden) { closeSettings(); }
     });
 
+    setWorkerDateRange("15days", false);
     updateActiveNavigation();
     requestJson("api/rounds").then(renderRounds).catch(showRoundsError);
 }());

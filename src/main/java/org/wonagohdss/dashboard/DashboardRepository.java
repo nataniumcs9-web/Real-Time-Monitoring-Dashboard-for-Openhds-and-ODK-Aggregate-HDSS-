@@ -118,11 +118,19 @@ public final class DashboardRepository {
                             return section;
                         }
                     });
+            Future<Map<String, Object>> submissionQuality = submitSection(executor, roundNumber,
+                    new SectionLoader() {
+                        public Map<String, Object> load(Connection sectionConnection, int round)
+                                throws SQLException {
+                            return getRoundSummary(sectionConnection, round);
+                        }
+                    });
             response.put("baseline", waitForSection(baseline, "baseline summary"));
             response.put("progress", waitForSection(progress, "round progress"));
             response.put("newBaseline", waitForSection(newBaseline, "new baseline records"));
             response.put("vitalEvents", waitForSection(vitalEvents, "vital events").get("items"));
             response.put("eventUpdates", waitForSection(eventUpdates, "event updates").get("items"));
+            response.put("roundSummary", waitForSection(submissionQuality, "round summary"));
         } finally {
             executor.shutdownNow();
         }
@@ -256,6 +264,59 @@ public final class DashboardRepository {
         return rows;
     }
 
+    public List<Map<String, Object>> getFieldWorkerSubmissions(String type, int roundNumber,
+                                                                Date from, Date to)
+            throws SQLException {
+        if ("visit".equals(type) && roundNumber == 0) {
+            return new ArrayList<Map<String, Object>>();
+        }
+        String table = "baseline".equals(type) ? "baseline_core" : "visit_registration_core";
+        String worker = "TRIM(OPENHDS_FIELD_WORKER_ID)";
+        StringBuilder sql = new StringBuilder("SELECT ").append(worker)
+                .append(" AS label, COUNT(*) AS total FROM ").append(odk).append(".`")
+                .append(table).append("` WHERE NULLIF(").append(worker).append(", '') IS NOT NULL ")
+                .append("AND UPPER(").append(worker).append(") <> 'FWAD1'");
+        if (from != null) {
+            sql.append(" AND `_SUBMISSION_DATE` >= ? AND `_SUBMISSION_DATE` < DATE_ADD(?, INTERVAL 1 DAY)");
+        }
+        if ("visit".equals(type)) {
+            sql.append(" AND OPENHDS_ROUND_NUMBER = ?");
+        }
+        sql.append(" GROUP BY ").append(worker).append(" ORDER BY total DESC, label");
+
+        List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
+        Connection connection = config.openConnection();
+        try {
+            PreparedStatement statement = connection.prepareStatement(sql.toString());
+            try {
+                int parameter = 1;
+                if (from != null) {
+                    statement.setDate(parameter++, from);
+                    statement.setDate(parameter++, to);
+                }
+                if ("visit".equals(type)) {
+                    statement.setInt(parameter, roundNumber);
+                }
+                ResultSet result = statement.executeQuery();
+                try {
+                    while (result.next()) {
+                        Map<String, Object> row = new LinkedHashMap<String, Object>();
+                        row.put("label", result.getString("label"));
+                        row.put("total", Long.valueOf(result.getLong("total")));
+                        rows.add(row);
+                    }
+                } finally {
+                    result.close();
+                }
+            } finally {
+                statement.close();
+            }
+        } finally {
+            connection.close();
+        }
+        return rows;
+    }
+
     private Map<String, Object> getBaseline(Connection connection) throws SQLException {
         Map<String, Object> data = new LinkedHashMap<String, Object>();
         data.put("households", Long.valueOf(scalar(connection,
@@ -276,6 +337,17 @@ public final class DashboardRepository {
                 "SELECT COALESCE(NULLIF(gender, ''), 'Unspecified') AS label, COUNT(DISTINCT uuid) AS total FROM "
                         + openhds + ".`allpopkebele` WHERE uuid IS NOT NULL GROUP BY gender ORDER BY gender"));
         return data;
+    }
+
+    private Map<String, Object> getRoundSummary(Connection connection, int roundNumber) throws SQLException {
+        Map<String, Object> summary = new LinkedHashMap<String, Object>();
+        summary.put("socialGroups", Long.valueOf(scalar(connection,
+                "SELECT COUNT(*) FROM " + odk + ".`social_group_registration_core`")));
+        summary.put("relationships", Long.valueOf(scalar(connection,
+                "SELECT COUNT(*) FROM " + odk + ".`relationship_core`")));
+        summary.put("membership", Long.valueOf(scalar(connection,
+                "SELECT COUNT(*) FROM " + odk + ".`membership_core`")));
+        return summary;
     }
 
     private Map<String, Object> getProgress(Connection connection, int roundNumber) throws SQLException {
