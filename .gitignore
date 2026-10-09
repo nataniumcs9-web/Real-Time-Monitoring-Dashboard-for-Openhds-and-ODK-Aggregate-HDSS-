@@ -1,0 +1,21 @@
+target/
+*.class
+*.log
+
+# Local database configuration and credential files
+.env
+.env.*
+dashboard.properties
+dashboard.properties.local
+
+# Local database backups and sample reports can contain sensitive records
+*.sql
+*.sql.gz
+*.doc
+*.docx
+
+# IDE and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

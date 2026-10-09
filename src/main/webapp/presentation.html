@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Round Briefing | Wonago HDSS</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/presentation.css">
+</head>
+<body class="deck-page">
+<header class="deck-toolbar">
+    <a href="index.html">← Dashboard</a>
+    <span id="deck-round-label">Loading round…</span>
+    <div><button id="prev-slide" type="button" aria-label="Previous slide">←</button><span id="slide-count"></span><button id="next-slide" type="button" aria-label="Next slide">→</button><button id="deck-print" type="button">Print slides</button></div>
+</header>
+<main id="slides" class="slides">
+    <div id="deck-status" class="loading-state">Preparing briefing…</div>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="js/presentation.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# Configure these as JVM properties (-Ddashboard.db.url=...) or environment variables.
+# The URL should connect to the MySQL server that can read both schemas.
+DASHBOARD_DB_URL=jdbc:mysql://localhost:3306/openhds?useUnicode=true&characterEncoding=UTF-8
+DASHBOARD_DB_USER=round_monitor_readonly
+DASHBOARD_DB_PASSWORD=
+DASHBOARD_OPENHDS_SCHEMA=openhds
+DASHBOARD_ODK_SCHEMA=odk_prod

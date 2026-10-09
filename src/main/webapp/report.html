@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Monitoring Report | Wonago HDSS</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/report.css">
+</head>
+<body class="report-page">
+<header class="report-topbar">
+    <a href="index.html" class="report-back">← Dashboard</a>
+    <div class="report-actions">
+        <button type="button" id="word-export" class="button button-outline">Download Word</button>
+        <button type="button" id="pdf-export" class="button button-outline">Print / Save PDF</button>
+        <a id="slide-link" class="button button-primary" href="presentation.html">Presentation</a>
+    </div>
+</header>
+<main class="report-container">
+    <div id="report-status" class="loading-state">Building the selected round report…</div>
+    <article id="report-content" hidden>
+        <header class="report-cover">
+            <div class="eyebrow">WONAGO HEALTH &amp; DEMOGRAPHIC SURVEILLANCE SYSTEM</div>
+            <h1 id="report-title">Round Monitoring Report</h1>
+            <p id="report-subtitle"></p>
+            <div class="report-meta"><span id="report-period"></span><span id="report-created"></span></div>
+        </header>
+        <section class="report-section">
+            <div class="eyebrow">01 · INTRODUCTION</div>
+            <h2>Introduction and catchment context</h2>
+            <p>This report presents round-specific household coverage, baseline change, vital events and event updates for the Wonago Health and Demographic Surveillance System. The supplied 2024/25 baseline report describes a catchment in Gedeo Zone with eight Kebeles and 29 Gotes. Confirm current administrative names and boundaries before external distribution.</p>
+            <p id="report-intro"></p>
+        </section>
+        <section class="report-section">
+            <div class="eyebrow">02 · BASELINE SUMMARY</div>
+            <h2>Executive overview</h2>
+            <div id="report-kpis" class="report-kpis"></div>
+            <h3>Household and population distribution by Kebele</h3>
+            <div id="kebele-table" class="report-table-wrap"></div>
+            <div class="report-two-col">
+                <div><h3>Population by sex</h3><div id="sex-table" class="report-table-wrap"></div></div>
+                <p id="profile-note" class="report-small"></p>
+            </div>
+        </section>
+        <section class="report-section">
+            <div class="eyebrow">03 · FIELDWORK</div>
+            <h2>Household coverage and progress</h2>
+            <p id="coverage-narrative"></p>
+            <div class="report-progress-track"><span id="report-progress-fill"></span></div>
+            <div id="cluster-table" class="report-table-wrap"></div>
+        </section>
+        <section class="report-section">
+            <div class="eyebrow">04 · SPATIAL DISTRIBUTION</div>
+            <h2>Household coverage map</h2>
+            <p>Baseline household coordinates, IDs, Kebele and cluster come from the OpenHDS allpopkebele2 view. Households are shown in red when no visit with the selected round number is recorded and green when a matching visit is recorded. Use the dashboard map to filter markers by status.</p>
+            <div id="report-map" class="report-map"></div>
+            <div id="map-summary"></div>
+        </section>
+        <section class="report-section">
+            <div class="eyebrow">05 · BASELINE CHANGE</div>
+            <h2>New household and population registrations</h2>
+            <div id="new-baseline-summary"></div>
+            <div id="new-baseline-tables" class="report-two-col"></div>
+        </section>
+        <section class="report-section">
+            <div class="eyebrow">06 · VITAL EVENTS</div>
+            <h2>Vital events recorded</h2>
+            <p>Counts are included only where the source form can be linked to the selected round. Scope notes identify whether the linkage is visit-based or inferred from round dates.</p>
+            <div id="vital-table" class="report-table-wrap"></div>
+        </section>
+        <section class="report-section">
+            <div class="eyebrow">07 · EVENT UPDATES</div>
+            <h2>Health and household updates</h2>
+            <div id="updates-table" class="report-table-wrap"></div>
+        </section>
+        <section class="report-section">
+            <div class="eyebrow">08 · METHODS AND INTERPRETATION</div>
+            <h2>Data sources and limitations</h2>
+            <ul id="method-notes"></ul>
+            <p class="report-small">Prepared by the Wonago HDSS Round Monitor from the connected OpenHDS and ODK databases. Review all counts against the source systems before external publication.</p>
+        </section>
+        <footer class="report-footer">Wonago HDSS · Round Monitoring Report · Generated <span id="footer-generated"></span></footer>
+    </article>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="js/report.js"></script>
+</body>
+</html>
